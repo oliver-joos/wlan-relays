@@ -38,7 +38,7 @@ RELAY_PINS = {num: Pin(num, Pin.OUT, value=True) for num in (19, 21, 22, 23)}
 
 HTTP_RESPONSE = """\
 HTTP/1.1 {status}
-Server: relay_webserver
+Server: {server}
 Connection: close
 
 """
@@ -70,6 +70,7 @@ async def handle_request(reader, writer):
                     key, value = line.split(":", 1)
                     headers[key.strip().lower()] = value.strip()
                 continue
+
             if status == 200:
                 try:
                     length = int(headers["content-length"])
@@ -103,7 +104,7 @@ async def handle_request(reader, writer):
             pass
 
         print("Sending response:")
-        resp = HTTP_RESPONSE.format(status=status)
+        resp = HTTP_RESPONSE.format(status=status, server=HOSTNAME)
         print('  ' + '\n  '.join(resp.splitlines()))
         await writer.awrite(resp.replace('\n', '\r\n'))
 
@@ -114,6 +115,7 @@ def main():
     """Setup network interface controller."""
     nic = network.WLAN(network.STA_IF if secrets else network.AP_IF)
     nic.active(False)
+    network.hostname(HOSTNAME)
     if secrets:
         # Connect to router
         nic.active(True)
@@ -129,9 +131,8 @@ def main():
         nic.config(security=0)     # 0 = OPEN, 3 = WPA2, 4 = WPA/WPA2
         # nic.config(password="password")
         print(f'Providing a new access-point {HOSTNAME}')
-        network.hostname(HOSTNAME)
         nic.active(True)
-    print(f"Now have IP address {nic.ifconfig()[0]}")
+    print(f"My IP address is {nic.ifconfig()[0]}")
 
     # Start server task
     server_task = uasyncio.start_server(handle_request, LISTEN_IP, PORT)
