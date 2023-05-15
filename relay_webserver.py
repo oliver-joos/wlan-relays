@@ -78,14 +78,12 @@ async def handle_request(reader, writer):
                 if length:
                     body = (await reader.read(length)).decode()
                     print('  ' + body)
-            break
+        except OSError:
+            status = None
         except Exception as exc:
             sys.print_exception(exc)
-            if isinstance(exc, OSError):
-                status = None
-            else:
-                status = 500
-            break
+            status = 500
+        break
 
     if status is not None:
         # Handle request
