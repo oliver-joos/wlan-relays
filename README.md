@@ -44,9 +44,9 @@ until the pins are actively controlled as outputs you can choose
 Install the **ESP-IDF 4.4.4** build tools (**only needed once!**):
 
 ```shell
-sudo apt purge brltty                   # brltty steals /dev/ttyUSBx
 sudo apt update
 sudo apt install git wget flex bison gperf python3 python3-pip python3-setuptools cmake ninja-build ccache libffi-dev libssl-dev dfu-util libusb-1.0-0
+sudo apt remove brltty                  # brltty steals /dev/ttyUSBx
 mkdir -p ~/esp
 cd ~/esp
 git clone -b v4.4.4 --recursive https://github.com/espressif/esp-idf.git
@@ -57,15 +57,17 @@ sudo adduser $USER dialout              # only needed for /dev/ttyACMx
                                         # then logout/login or reboot!
 ```
 
-Prepare MicroPython for ESP32 (**only needed once!**):
+Download this project and prepare MicroPython for ESP32 (**only needed once!**):
 
 ```shell
-git submodule update micropython/
+git clone https://github.com/oliver-joos/wlan-relays.git
+
+git submodule update --init micropython/
 make -C micropython/mpy-cross/
 make -C micropython/ports/esp32/ submodules
 ```
 
-Setup your terminal (**only need once per session!**):
+Setup your terminal (**needed once per session!**):
 
 ```shell
 source ~/esp/esp-idf/export.sh
@@ -78,7 +80,7 @@ Build and deploy the MicroPython firmware image:
 ```shell
 make -C micropython/ports/esp32/ -j clean all
 
-make -C micropython/ports/esp32/ PORT=$ESPPORT erase   # only for empty boards
+make -C micropython/ports/esp32/ PORT=$ESPPORT erase  # only for empty boards
 make -C micropython/ports/esp32/ PORT=$ESPPORT deploy
 ```
 
