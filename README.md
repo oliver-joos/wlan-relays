@@ -47,10 +47,10 @@ Install the **ESP-IDF 4.4.4** build tools (**only needed once!**):
 sudo apt update
 sudo apt install git wget flex bison gperf python3 python3-pip python3-setuptools cmake ninja-build ccache libffi-dev libssl-dev dfu-util libusb-1.0-0
 sudo apt remove brltty                  # brltty steals /dev/ttyUSBx
-mkdir -p ~/esp
-cd ~/esp
+
+mkdir -p ~/esp && cd ~/esp
 git clone -b v4.4.4 --recursive https://github.com/espressif/esp-idf.git
-cd ~/esp/esp-idf
+cd esp-idf
 ./install.sh esp32
 
 sudo adduser $USER dialout              # only needed for /dev/ttyACMx
@@ -60,9 +60,11 @@ sudo adduser $USER dialout              # only needed for /dev/ttyACMx
 Download this project and prepare MicroPython for ESP32 (**only needed once!**):
 
 ```shell
+mkdir -p ~/git && cd ~/git
 git clone https://github.com/oliver-joos/wlan-relays.git
-
+cd wlan-relays
 git submodule update --init micropython/
+
 make -C micropython/mpy-cross/
 make -C micropython/ports/esp32/ submodules
 ```
