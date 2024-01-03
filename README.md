@@ -45,15 +45,15 @@ The following tutorial works on a Linux Mint 21.x or similar Debian-based Linux
 like Ubuntu. You can run Linux Mint directly from a Live USB stick without
 installing it on your computer.
 
-Install the **ESP-IDF 5.0.2** build tools (**only needed once!**):
+Install the **ESP-IDF 5.0.4** build tools (**only needed once!**):
 
 ```shell
 sudo apt update
-sudo apt install git wget flex bison gperf python3 python3-venv cmake ninja-build ccache libffi-dev libssl-dev dfu-util libusb-1.0-0 libc6-dev
+sudo apt install git wget flex bison gperf python3 python3-venv cmake ninja-build ccache libffi-dev libssl-dev dfu-util libusb-1.0-0
 sudo apt remove brltty                  # stop brltty from stealing /dev/ttyUSBx
 
 mkdir -p ~/esp && cd ~/esp
-git clone -b v5.0.2 --recursive https://github.com/espressif/esp-idf.git
+git clone -b v5.0.4 --recursive https://github.com/espressif/esp-idf.git
 cd esp-idf
 ./install.sh esp32
 
@@ -78,7 +78,7 @@ Setup your terminal (**needed once per session!**):
 ```shell
 source ~/esp/esp-idf/export.sh
 export ESPPORT=/dev/ttyUSB0             # or /dev/ttyACM0 for CH9102X USB ICs
-export ESPBAUD=115200
+export ESPBAUD=921600
 ```
 
 Build and deploy the MicroPython firmware image:
