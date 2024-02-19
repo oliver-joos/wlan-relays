@@ -1,0 +1,20 @@
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions-4MiB-ota.csv"
+
+# Reduce firmware size at the cost of speed
+#CONFIG_COMPILER_OPTIMIZATION_SIZE=y
+#CONFIG_COMPILER_OPTIMIZATION_PERF=n
+
+# Increase access speed to flash memory => 20% faster
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+
+# Disable PPP => saves 35k flash
+CONFIG_LWIP_PPP_SUPPORT=n
+
+# Disable IPv6 => saves 24.5k flash
+CONFIG_LWIP_IPV6=n
+
+# Change maximum log level to error => saves 19k flash
+CONFIG_LOG_MAXIMUM_LEVEL_ERROR=y
+CONFIG_LOG_MAXIMUM_LEVEL_INFO=n
+CONFIG_COMPILER_OPTIMIZATION_CHECKS_SILENT=y
