@@ -69,26 +69,33 @@ git clone https://github.com/oliver-joos/wlan-relays.git
 cd wlan-relays
 git submodule update --init micropython/
 
-make -C micropython/mpy-cross/
-make -C micropython/ports/esp32/ submodules
+make -C micropython/mpy-cross/  # build MicroPython cross-compiler
 ```
 
 Setup your terminal (**needed once per session!**):
 
 ```shell
-source ~/esp/esp-idf/export.sh
-export ESPPORT=/dev/ttyUSB0             # or /dev/ttyACM0 for CH9102X USB ICs
+source ~/esp/esp-idf/export.sh  # activate virtual environment of ESP tools
+
+# Choose your board:
+export BOARD=ESP32_DEVKIT ;       export ESPPORT=/dev/ttyACM0
+export BOARD=ESP32_LOLIN32_LITE ; export ESPPORT=/dev/ttyUSB0
+export BOARD=ESP32_C3_SUPERMINI ; export ESPPORT=/dev/ttyACM0
+
+export BOARD_DIR=$PWD/boards/$BOARD
 export ESPBAUD=921600
 ```
 
 Build and deploy the MicroPython firmware image:
 
 ```shell
-make -C micropython/ports/esp32/ clean  # only after changes in micropython/
-make -C micropython/ports/esp32/ -j all
+make -C micropython/ports/esp32/ submodules  # update necessary submodules
 
-make -C micropython/ports/esp32/ PORT=$ESPPORT erase  # only for empty boards
-make -C micropython/ports/esp32/ PORT=$ESPPORT deploy
+make -C micropython/ports/esp32/ BOARD_DIR=$BOARD_DIR clean  # only after changes in micropython/
+make -C micropython/ports/esp32/ BOARD_DIR=$BOARD_DIR -j all
+
+make -C micropython/ports/esp32/ BOARD_DIR=$BOARD_DIR erase  # only for empty boards
+make -C micropython/ports/esp32/ BOARD_DIR=$BOARD_DIR deploy
 ```
 
 Copy Python files to your board (**overwrites existing files!**):
