@@ -45,7 +45,7 @@ The following tutorial works on a Linux Mint 21.x or similar Debian-based Linux
 like Ubuntu. You can run Linux Mint directly from a Live USB stick without
 installing it on your computer.
 
-Install the **ESP-IDF 5.0.4** build tools (**only needed once!**):
+Install the **ESP-IDF 5.4.1** build tools (**only needed once!**):
 
 ```shell
 sudo apt update
@@ -53,7 +53,7 @@ sudo apt install git wget flex bison gperf python3 python3-venv cmake ninja-buil
 sudo apt remove brltty                  # stop brltty from stealing /dev/ttyUSBx
 
 mkdir -p ~/esp && cd ~/esp
-git clone -b v5.0.4 --recursive https://github.com/espressif/esp-idf.git
+git clone -b v5.4.1 --recursive https://github.com/espressif/esp-idf.git
 cd esp-idf
 ./install.sh esp32
 
