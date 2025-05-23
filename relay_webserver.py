@@ -9,7 +9,7 @@
 
 """This Webserver controls output pins of an ESP32 DevKit V1 board.
 
-Client example:  curl -v -m 3 -X POST http://<SERVER-IP>:7005 --data '{"pin22": false}'
+Client example:  curl -v -m 3 -X POST http://<SERVER-IP> --data '{"pin22": false}'
 """
 
 import sys
@@ -29,12 +29,9 @@ except ImportError:
     secrets = None
 
 
-HOSTNAME = "relay_webserver"
+HOSTNAME = "relay-server"
 LISTEN_IP = "0.0.0.0"
-PORT = 7005
-
-# Map valid pin numbers to Pin objects
-RELAY_PINS = {num: Pin(num, Pin.OUT, value=True) for num in (19, 21, 22, 23)}
+PORT = 80
 
 HTTP_RESPONSE = """\
 HTTP/1.1 {status}
@@ -42,6 +39,9 @@ Server: {server}
 Connection: close
 
 """
+
+# Map of Pin names to initialized Pin objects
+pin_cache = {}
 
 
 async def handle_request(reader, writer):
@@ -89,17 +89,14 @@ async def handle_request(reader, writer):
     if status is not None:
         # Handle request
         if body:
-            try:
-                body = json.loads(body)
-                values = {num: body.get(f"pin{num}") for num in RELAY_PINS.keys()}
-            except (ValueError, AttributeError):
-                status = 400
-            else:
-                for num, pin in RELAY_PINS.items():
-                    value = values[num]
-                    if value is not None:
-                        print(f"Set Pin D{num} to {'high' if value else 'low'}")
-                        pin.value(bool(value))
+            props = json.loads(body)
+            for pin_name, new_value in props.items():
+                try:
+                    pin = pin_cache[pin_name]
+                except KeyError:
+                    pin = pin_cache[pin_name] = Pin(pin_name, Pin.OUT, value=True)
+                print(f"Set {pin} to {'high' if new_value else 'low'}")
+                pin.value(bool(new_value))
         else:
             pass
 

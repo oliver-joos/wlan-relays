@@ -6,19 +6,28 @@ These pins can be connected to solid state relays to switch lamps for example.
 
 ## Client Example
 
-The board will start in access-point mode. This means it provides its own WLAN
-and you have to connect your computer or phone to it first. In this mode, the
-board always has the **IP address 192.168.4.1**.
+The board will start in **access-point mode**. This means it provides its own
+WLAN and you have to connect your computer or phone to it first. In this mode,
+the board always has the **IP address 192.168.4.1**.
 
-Set pin D22 to low using the HTTP client **curl**:
+Set the LED pin to low using the HTTP client **curl**:
 
 ```shell
-curl -v -m 3 -X POST http://192.168.4.1:7005 --data '{"pin22": false}'
+curl -v -m 3 -X POST http://192.168.4.1 --data '{"LED": false}'
 ```
 
 You can connect the board to your existing WLAN by entering your WLAN SSID and
 password into ``secrets.py``. In this mode, your router assigns a new IP address
 to the board, which is then displayed in the web interface of most routers.
+The board also announces its hostname **relay-server**. If your router
+understands this you can access the board by its hostname:
+
+```shell
+curl -v -m 3 -X POST http://relay-server.local --data '{"LED": false}'
+
+curl -v -m 3 -X POST http://relay-server.local --data '{"RELAY4": true}'
+```
+
 
 ## The Hardware
 
