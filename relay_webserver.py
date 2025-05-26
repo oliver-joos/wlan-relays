@@ -155,6 +155,7 @@ class Response:
                         print(f"Send {fpath_ext}")
                         await self.sendstream(f)
                 error = None
+                break
             except OSError as exc:
                 if exc.errno in (errno.ENOENT, errno.EINVAL, errno.EISDIR):
                     error = exc
