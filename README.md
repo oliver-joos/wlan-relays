@@ -4,11 +4,12 @@ This repository contains a very simple HTTP server written in
 [MicroPython](https://micropython.org/) for controlling pins of an ESP32 board.
 These pins can be connected to solid state relays to switch lamps for example.
 
-## Client Example
+## Usage
 
 The board will start in **access-point mode**. This means it provides its own
 WLAN and you have to connect your computer or phone to it first. In this mode,
 the board always has the **IP address 192.168.4.1**.
+Valid pin names are in ``pins.csv`` of the corresponding boards directory.
 
 Set the LED pin to low using the HTTP client **curl**:
 
@@ -23,11 +24,13 @@ The board also announces its hostname **relay-server**. If your router
 understands this you can access the board by its hostname:
 
 ```shell
-curl -v -m 3 -X POST http://relay-server.local --data '{"LED": false}'
-
 curl -v -m 3 -X POST http://relay-server.local --data '{"RELAY4": true}'
 ```
 
+This HTTP server can also host Web pages stored in directory ``www/``.
+The current example only shows one button to toggle the LED pin.
+You can access the ``www/index.html`` with any browser under
+<http://relay-server.local/index.html>.
 
 ## The Hardware
 
@@ -107,20 +110,20 @@ make -C micropython/ports/esp32/ BOARD_DIR=$BOARD_DIR erase  # only for empty bo
 make -C micropython/ports/esp32/ BOARD_DIR=$BOARD_DIR deploy
 ```
 
-Copy Python files to your board (**overwrites existing files!**):
+Copy Python and www files to your board (**overwrites existing files!**):
 
 ```shell
-./micropython/tools/mpremote/mpremote.py fs cp *.py :/
+./micropython/tools/mpremote/mpremote.py cp *.py :/ + cp -r www :/
 ```
 
-Now press the reset button on your board!
+Now press the reset button on your board to start the server!
 
-To see log messages or soft-reset the board you can use the MicroPython REPL interface:
+To see log messages or soft-resetting the board you can use the MicroPython REPL interface:
 
 ```shell
 ./micropython/tools/mpremote/mpremote.py    # connect to REPL
 
-# press Ctrl+C to abort the application
+# press Ctrl+C to abort the server
 # press Ctrl+D to soft-reset the system
 # press Ctrl+X to exit the mpremote tool
 ```

@@ -9,7 +9,7 @@
 
 """This Webserver controls output pins of an ESP32 DevKit V1 board.
 
-Client example:  curl -v -m 3 -X POST http://<SERVER-IP> --data '{"pin22": false}'
+Client example:  curl -v -m 3 -X POST http://<SERVER-IP> --data '{"LED": false}'
 """
 
 import sys
@@ -25,8 +25,6 @@ from machine import Pin
 try:
     from secrets import secrets
 except ImportError:
-    print("WLAN name/password are loaded from secrets.py - please add them there!")
-    print("Fall back to access-point mode now.")
     secrets = None
 
 
@@ -120,7 +118,7 @@ class Response:
             self.writer.write(piece)
             size += nbytes
         await self.writer.drain()
-        print(f"Sent {size} bytes")
+        return size
 
     async def sendfile(self, fpath, content_type=None, req_headers=None):
         """Send a file as HTTP response to a request.
@@ -152,8 +150,8 @@ class Response:
                             content_type=content_type or guess_mimetype(fpath),
                             gzipped=bool(ending)
                         )
-                        print(f"Send {fpath_ext}")
-                        await self.sendstream(f)
+                        size = await self.sendstream(f)
+                        print(f"Sent {fpath_ext} ({size} bytes)")
                 error = None
                 break
             except OSError as exc:
@@ -172,7 +170,7 @@ async def handle_request(reader, writer):
     status = None
     resp = Response(writer)
 
-    print("Receiving request:")
+    print("\nReceiving request:")
     while True:
         try:
             line = await reader.readline()
@@ -227,7 +225,6 @@ async def handle_request(reader, writer):
                 resp.start_response(status=200)
 
         elif method == "GET":
-            print(path)
             if path.endswith("/"):
                 # Append default filename
                 path += "index.html"
@@ -256,6 +253,7 @@ def main():
             time.sleep(0.5)
         print()
     else:
+        print("Cannot read WLAN name/password from secrets.py!")
         # Start as access-point
         nic.config(ssid=HOSTNAME)
         nic.config(security=0)     # 0 = OPEN, 3 = WPA2, 4 = WPA/WPA2
