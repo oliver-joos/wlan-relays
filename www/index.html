@@ -14,10 +14,10 @@
     </style>
 </head>
 <body>
-    <button id="toggleButton">Turn LED pin high</button>
+    <button id="toggleButton">Turn LED pin low</button>
 
     <script>
-        let ledStatus = false; // Initial status: Off
+        let ledStatus = true; // Initial status: high
 
         // Function to send the POST request
         function sendRequest(status) {
