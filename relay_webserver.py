@@ -55,6 +55,7 @@ _CACHE_MAX_AGE = const(600)
 # Common HTTP status codes and reasons
 _STATUS_REASONS = {
     200: "OK",
+    304: "Not Modified",
     400: "Bad Request",
     404: "Not Found",
     500: "Internal Server Error",
@@ -121,11 +122,10 @@ class Response:
         return size
 
     async def sendfile(self, fpath, content_type=None, req_headers=None):
-        """Send a file as HTTP response to a request.
+        """Send a HTTP response with a file in the body.
 
-        If we fail to read the file a response with HTTP status 404 will be sent.
-        If there is a request header "Last-Modified" with the mtime of the file then a
-        HTTP status 304 (Not Modified) with an empty body will be sent.
+        If there is a request header "Last-Modified" with the same mtime like the file
+        then a HTTP status 304 (Not Modified) with an empty body will be sent.
 
         :param fpath:           absolute or relative path of the file
         :param content_type:    content-type of the file, or None to guess it from file name
@@ -141,7 +141,7 @@ class Response:
                 self.set_header("Last-Modified", mtime)
                 self.set_header("Cache-Control", f"max-age={_CACHE_MAX_AGE}")
                 if req_headers.get("if-modified-since") == mtime:
-                    # Send status "Not modified"
+                    # Send status "Not Modified"
                     self.start_response(status=304)
                 else:
                     with open(fpath_ext, "rb") as f:
@@ -165,55 +165,48 @@ class Response:
 
 async def handle_request(reader, writer):
     """Handle an incoming HTTP request."""
-    method = None
+    method = status = None
     headers = {}
-    status = None
     resp = Response(writer)
 
     print("\nReceiving request:")
-    while True:
-        try:
+    try:
+        while True:
             line = await reader.readline()
             if not line:
                 # Connection closed remotely
                 raise OSError(errno.ECONNABORTED)
             line = line.decode().rstrip()
             print('  ' + line)
-            if line:
-                if status is None:
-                    # First HTTP line
-                    try:
-                        method, path = line.rsplit(" ", 3)[-3:-1]
-                    except ValueError:
-                        status = 400
-                    if method in ("GET", "POST"):
-                        status = 200
-                    else:
-                        status = 400
-                else:
-                    # HTTP header line
-                    key, value = line.split(":", 1)
-                    headers[key.strip().lower()] = value.strip()
-                continue
+            if not line:
+                break
+            if status is None:
+                # First HTTP line
+                method, path = line.rsplit(" ", 3)[-3:-1]
+                if method not in ("GET", "POST"):
+                    status = 400
+                    break
+                status = 200
+            else:
+                # HTTP header line
+                key, value = line.split(":", 1)
+                headers[key.strip().lower()] = value.strip()
 
-            if status == 200:
-                try:
-                    length = int(headers["content-length"])
-                except (KeyError, ValueError):
-                    length = None
-                if length:
-                    body = (await reader.read(length)).decode()
-                    print('  ' + body)
-        except OSError:
-            status = None
-        except Exception as exc:
-            sys.print_exception(exc)
-            status = 500
-        break
+        if status == 200:
+            length = headers.get("content-length")
+            if length is not None:
+                body = (await reader.read(int(length))).decode()
+                print('  ' + body)
+    except OSError:
+        method = status = None
+    except Exception as exc:
+        sys.print_exception(exc)
+        method = None
+        status = 400
 
-    if status is not None:
-        # Handle request
-        if method == "POST":
+    # Handle HTTP method
+    if method == "POST":
+        try:
             props = json.loads(body)
             for pin_name, new_value in props.items():
                 try:
@@ -222,18 +215,28 @@ async def handle_request(reader, writer):
                     pin = pin_cache[pin_name] = Pin(pin_name, Pin.OUT, value=True)
                 print(f"Set {pin} to {'high' if new_value else 'low'}")
                 pin.value(bool(new_value))
-                resp.start_response(status=200)
+            status = 200
+        except ValueError:
+            status = 400
 
-        elif method == "GET":
-            if path.endswith("/"):
-                # Append default filename
-                path += "index.html"
-            path = STATIC_DIRPATH + path.lstrip("/")
-            try:
-                await resp.sendfile(path, req_headers=headers)
-            except OSError as exc:
-                print(f"Failed to access {path}: {exc}")
-                resp.start_response(status=404)
+    elif method == "GET":
+        if path.endswith("/"):
+            # Append default filename
+            path += "index.html"
+        path = STATIC_DIRPATH + path.lstrip("/")
+        try:
+            await resp.sendfile(path, req_headers=headers)
+            status = None
+        except OSError as exc:
+            print(f"Failed to access {path}: {exc}")
+            status = 404
+
+    if status is not None:
+        try:
+            # Send HTTP status
+            resp.start_response(status)
+        except OSError:
+            pass
 
     await writer.aclose()
 
