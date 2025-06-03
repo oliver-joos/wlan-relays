@@ -265,12 +265,17 @@ def main():
         nic.active(True)
     print(f"My IP address is {nic.ifconfig()[0]}")
 
-    # Start server task
-    server_task = uasyncio.start_server(handle_request, LISTEN_IP, PORT)
+    # Run server
     loop = uasyncio.get_event_loop()
-    loop.create_task(server_task)
+    start_task = uasyncio.start_server(handle_request, LISTEN_IP, PORT)
+    server = loop.run_until_complete(start_task)
     print(f"Listening on {LISTEN_IP}:{PORT}")
-    loop.run_forever()
+    try:
+        loop.run_forever()
+    finally:
+        server.close()
+        loop.run_until_complete(server.task)
+        print("Server closed")
 
 
 if __name__ == "__main__":
