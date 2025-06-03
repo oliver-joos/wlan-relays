@@ -30,7 +30,6 @@ except ImportError:
 
 HOSTNAME = "relay-server"
 LISTEN_IP = "0.0.0.0"
-PORT = 80
 STATIC_DIRPATH = "www/"
 
 # MIME types of common filename extensions
@@ -84,7 +83,7 @@ class Response:
         self.headers[key] = value
 
     def start_response(self, status=200, content_len=0, content_type=None, gzipped=False):
-        print(f"Send HTTP status {status}")
+        print(f"Sending HTTP status {status}")
         write = self.writer.write
         reason = _STATUS_REASONS.get(status)
         if reason:
@@ -169,7 +168,7 @@ async def handle_request(reader, writer):
     headers = {}
     resp = Response(writer)
 
-    print("\nReceiving request:")
+    print("\nReceiving HTTP request:")
     try:
         while True:
             line = await reader.readline()
@@ -177,11 +176,11 @@ async def handle_request(reader, writer):
                 # Connection closed remotely
                 raise OSError(errno.ECONNABORTED)
             line = line.decode().rstrip()
-            print('  ' + line)
             if not line:
                 break
             if status is None:
                 # First HTTP line
+                print(f'  {line}')
                 method, path = line.rsplit(" ", 3)[-3:-1]
                 if method not in ("GET", "POST"):
                     status = 400
@@ -189,6 +188,7 @@ async def handle_request(reader, writer):
                 status = 200
             else:
                 # HTTP header line
+                # print(f'  {line}')
                 key, value = line.split(":", 1)
                 headers[key.strip().lower()] = value.strip()
 
@@ -250,26 +250,25 @@ def main():
         # Connect to router
         nic.active(True)
         nic.connect(secrets["ssid"], secrets["password"])
-        print(f'Connecting to SSID {secrets["ssid"]}', end="")
+        print(f'Connecting to WLAN {secrets["ssid"]} ', end="")
         while not nic.isconnected():
             print(".", end="")
             time.sleep(0.5)
         print()
     else:
-        print("Cannot read WLAN name/password from secrets.py!")
-        # Start as access-point
+        print("Cannot read WLAN ssid/password from secrets.py!")
+        # Provide access-point
         nic.config(ssid=HOSTNAME)
         nic.config(security=0)     # 0 = OPEN, 3 = WPA2, 4 = WPA/WPA2
         # nic.config(password="password")
-        print(f'Providing a new access-point {HOSTNAME}')
+        print(f'Providing new access-point {HOSTNAME}')
         nic.active(True)
-    print(f"My IP address is {nic.ifconfig()[0]}")
 
     # Run server
     loop = uasyncio.get_event_loop()
-    start_task = uasyncio.start_server(handle_request, LISTEN_IP, PORT)
+    start_task = uasyncio.start_server(handle_request, LISTEN_IP, 80)
     server = loop.run_until_complete(start_task)
-    print(f"Listening on {LISTEN_IP}:{PORT}")
+    print(f"Listening for http://{nic.ifconfig()[0]}")
     try:
         loop.run_forever()
     finally:
