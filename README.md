@@ -10,10 +10,12 @@ First the board starts in **access-point mode**, which means it creates its own
 WLAN network. You must connect your computer or phone to this network.
 In this mode, the board always has the **IP address 192.168.4.1**.
 
-To set the LED pin to low using the HTTP client **curl**, use the command:
+Valid pin names can be found in the `pins.csv` file located in the corresponding
+boards directory.
+To set the "LED" pin to low using the HTTP client **curl**, use the command:
 
 ```shell
-curl -v -m 3 -X POST http://192.168.4.1 --data '{"LED": false}'
+curl -v -m 3 -X POST http://192.168.4.1/api/pins --data '{"LED": false}'
 ```
 
 You can connect the board to your existing WLAN by entering your WLAN SSID and
@@ -23,11 +25,19 @@ The board also announces its hostname as **relay-server**. If your router
 supports this, you can access the board using its hostname:
 
 ```shell
-curl -v -m 3 -X POST http://relay-server.local --data '{"RELAY4": true}'
+curl -v -m 3 -X POST http://relay-server.local/api/pins --data '{"RELAY4": true}'
+```
+
+You can also output PWM signals. Note that most relays are not suitable for PWM!
+To control a motor, you could instead use an H-bridge chip like MX1508 or LM298.
+Each pin can generate PWM signals, but one pin is named "PWM" as an example.
+
+```shell
+curl -v -m 3 -X POST http://relay-server.local/api/pwms --data '{"PWM": 42}'
 ```
 
 This HTTP server can also host Web pages stored in the `www/` directory.
-The current example provides a single button to toggle the LED pin.
+The current example provides a button to toggle the LED pin and a slider for PWM.
 You can access the `www/index.html` page with any browser at
 <http://relay-server.local/index.html>.
 
@@ -38,8 +48,6 @@ only 50mA in idle mode or 130mA while transmitting.
 
 You can find pinouts for common ESP32 boards
 [here](https://randomnerdtutorials.com/esp32-pinout-reference-gpios/).
-Valid pin names can be found in the `pins.csv` file located in the
-corresponding boards directory.
 
 A **5V DC AC solid-state relay** can switch a few hundred watts of AC power.
 Some of these relays can be controlled directly by 3.3V output pins.
