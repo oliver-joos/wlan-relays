@@ -10,17 +10,46 @@
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
+            width: 250px;
+        }
+
+        /* Style for the slider container */
+        #pwm-container {
+            display: flex;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        /* Style for the slider label container */
+        #pwm-label {
+            width: 80px;
+            text-align: left;
+            margin-right: 10px;
+        }
+
+        /* Style for the slider */
+        #pwm-slider {
+            width: 160px;
+            height: 10px;
         }
     </style>
 </head>
 <body>
     <button id="toggleButton">Turn LED pin low</button>
+    <div id="pwm-container">
+        <div id="pwm-label">
+            <span id="pwm-value">PWM: 0</span>
+        </div>
+        <input type="range" id="pwm-slider" min="0" max="1023" value="0">
+    </div>
 
     <script>
         let ledStatus = true; // Initial status: high
+        let pwmValue = 0; // Initial PWM value
+        let pwmTimeout = null; // Timeout für PWM-Requests
 
-        // Function to send the POST request
-        function sendRequest(status) {
+        // Function to send the POST request for LED
+        function sendLedRequest(status) {
             fetch('/api/pins', {
                 method: 'POST',
                 headers: {
@@ -29,14 +58,26 @@
                 body: JSON.stringify({ "LED": status })
             })
             .then(response => response.text())
-            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Function to send the POST request for PWM
+        function sendPwmRequest(value) {
+            fetch('/api/pwms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ "PWM": value })
+            })
+            .then(response => response.text())
             .catch(error => console.error('Error:', error));
         }
 
         // Event listener for the button
         document.getElementById('toggleButton').addEventListener('click', function() {
             ledStatus = !ledStatus; // Toggle status
-            sendRequest(ledStatus); // Send request
+            sendLedRequest(ledStatus); // Send request
 
             // Update button text
             if (ledStatus) {
@@ -44,6 +85,22 @@
             } else {
                 this.textContent = 'Turn LED pin high';
             }
+        });
+
+        // Event listener for the slider
+        document.getElementById('pwm-slider').addEventListener('input', function() {
+            pwmValue = this.value;
+            document.getElementById('pwm-value').textContent = `PWM: ${pwmValue}`;
+
+            // Lösche vorhandenen Timeout
+            if (pwmTimeout !== null) {
+                clearTimeout(pwmTimeout);
+            }
+
+            // Setze neuen Timeout
+            pwmTimeout = setTimeout(function() {
+                sendPwmRequest(pwmValue); // Send request
+            }, 200);
         });
     </script>
 </body>

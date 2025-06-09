@@ -19,7 +19,7 @@ import os
 
 import uasyncio
 import network
-from machine import Pin
+from machine import Pin, PWM
 
 try:
     from secrets import secrets
@@ -65,8 +65,9 @@ known_methods = set()
 # List of registered URL routes as tuples (methods, path, handler)
 routes = []
 
-# Map of Pin names to initialized Pin objects
+# Map of Pin names to initialized Pin/PWM objects
 pin_cache = {}
+pwm_cache = {}
 
 def get_pin(pin_name):
     try:
@@ -74,6 +75,13 @@ def get_pin(pin_name):
     except KeyError:
         pin = pin_cache[pin_name] = Pin(pin_name, Pin.OUT, value=True)
     return pin
+
+def get_pwm(pin_name):
+    try:
+        pwm = pwm_cache[pin_name]
+    except KeyError:
+        pwm = pwm_cache[pin_name] = PWM(get_pin(pin_name), freq=15000)
+    return pwm
 
 
 def guess_mimetype(pathname):
