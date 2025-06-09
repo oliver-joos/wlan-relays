@@ -14,7 +14,6 @@ Client example:  curl -v -m 3 -X POST http://<SERVER-IP> --data '{"LED": false}'
 
 import sys
 import time
-import json
 import errno
 import os
 
@@ -60,8 +59,21 @@ _STATUS_REASONS = {
     500: "Internal Server Error",
 }
 
+# Set of registered HTTP methods like GET, POST etc.
+known_methods = set()
+
+# List of registered URL routes as tuples (methods, path, handler)
+routes = []
+
 # Map of Pin names to initialized Pin objects
 pin_cache = {}
+
+def get_pin(pin_name):
+    try:
+        pin = pin_cache[pin_name]
+    except KeyError:
+        pin = pin_cache[pin_name] = Pin(pin_name, Pin.OUT, value=True)
+    return pin
 
 
 def guess_mimetype(pathname):
@@ -162,9 +174,26 @@ class Response:
             raise error
 
 
+async def get_static_file(path, headers, resp):
+    if path.endswith("/"):
+        # Append default filename
+        path += "index.html"
+    path = STATIC_DIRPATH + path.lstrip("/")
+    try:
+        await resp.sendfile(path, req_headers=headers)
+        status = None
+    except OSError as exc:
+        print(f"Failed to access {path}: {exc}")
+        status = 404
+    return status
+
+known_methods.add("GET")
+
+
 async def handle_request(reader, writer):
     """Handle an incoming HTTP request."""
     method = status = None
+    path = None
     headers = {}
     resp = Response(writer)
 
@@ -182,7 +211,7 @@ async def handle_request(reader, writer):
                 # First HTTP line
                 print(f'  {line}')
                 method, path = line.rsplit(" ", 3)[-3:-1]
-                if method not in ("GET", "POST"):
+                if method not in known_methods:
                     status = 400
                     break
                 status = 200
@@ -204,41 +233,39 @@ async def handle_request(reader, writer):
         method = None
         status = 400
 
-    # Handle HTTP method
-    if method == "POST":
-        try:
-            props = json.loads(body)
-            for pin_name, new_value in props.items():
-                try:
-                    pin = pin_cache[pin_name]
-                except KeyError:
-                    pin = pin_cache[pin_name] = Pin(pin_name, Pin.OUT, value=True)
-                print(f"Set {pin} to {'high' if new_value else 'low'}")
-                pin.value(bool(new_value))
-            status = 200
-        except ValueError:
-            status = 400
+    if status is not None and status < 400:
+        # Handle HTTP method
+        for rt_methods, rt_path, handler in routes:
+            if method in rt_methods and path == rt_path:
+                status = await handler(headers, body)
+                break
+        else:
+            if method == "GET":
+                status = await get_static_file(path, headers, resp)
+            else:
+                status = 404
 
-    elif method == "GET":
-        if path.endswith("/"):
-            # Append default filename
-            path += "index.html"
-        path = STATIC_DIRPATH + path.lstrip("/")
-        try:
-            await resp.sendfile(path, req_headers=headers)
-            status = None
-        except OSError as exc:
-            print(f"Failed to access {path}: {exc}")
-            status = 404
-
-    if status is not None:
-        try:
+        if status is not None:
             # Send HTTP status
-            resp.start_response(status)
-        except OSError:
-            pass
+            try:
+                resp.start_response(status)
+            except OSError:
+                pass
 
     await writer.aclose()
+
+
+def route(path, methods="GET"):
+    def _route(handler):
+        nonlocal methods
+        if isinstance(methods, str):
+            known_methods.add(methods)
+        else:
+            known_methods.update(methods)
+        routes.append((methods, path, handler))
+        return handler
+
+    return _route
 
 
 def main():
