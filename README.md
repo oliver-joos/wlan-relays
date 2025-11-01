@@ -68,7 +68,7 @@ The following tutorial has been tested on Linux Mint 21.3. It should also work
 on newer Mint or similar Debian-based distributions like Ubuntu. You can run
 Linux directly from a Live USB stick without installing it on your computer.
 
-Install the **ESP-IDF 5.4.1** build tools (**only needed once!**):
+Install the **ESP-IDF 5.5.1** build tools (**only needed once!**):
 
 ```shell
 sudo apt update
@@ -76,7 +76,7 @@ sudo apt install git wget flex bison gperf python3 python3-venv cmake ninja-buil
 sudo apt remove brltty  # stop brltty from stealing /dev/ttyUSBx
 
 mkdir -p ~/esp && cd ~/esp
-git clone -b v5.4.1 --recursive https://github.com/espressif/esp-idf.git
+git clone -b v5.5.1 --recursive https://github.com/espressif/esp-idf.git
 cd esp-idf
 ./install.sh esp32
 
@@ -91,6 +91,7 @@ mkdir -p ~/git && cd ~/git
 git clone https://github.com/oliver-joos/wlan-relays.git
 cd wlan-relays
 git submodule update --init micropython/
+pip install --upgrade --requirement micropython/tools/mpremote/requirements.txt
 
 make -C micropython/mpy-cross/  # build the MicroPython cross-compiler
 ```
