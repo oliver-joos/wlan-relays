@@ -46,8 +46,8 @@ You can access the `www/index.html` page with any browser at
 ESP32 boards come with built-in WLAN hardware and operate at 5V and
 only 50mA in idle mode or 130mA while transmitting.
 
-You can find pinouts for common ESP32 boards
-[here](https://randomnerdtutorials.com/esp32-pinout-reference-gpios/).
+You can find pinouts for common ESP32 boards on
+[randomnerdtutorials.com](https://randomnerdtutorials.com/esp32-pinout-reference-gpios/).
 
 A **5V DC AC solid-state relay** can switch a few hundred watts of AC power.
 Some of these relays can be controlled directly by 3.3V output pins.

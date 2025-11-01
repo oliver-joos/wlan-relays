@@ -17,7 +17,7 @@ import time
 import errno
 import os
 
-import uasyncio
+import asyncio
 import network
 from machine import Pin, PWM
 
@@ -300,8 +300,8 @@ def main():
         nic.active(True)
 
     # Run server
-    loop = uasyncio.get_event_loop()
-    start_task = uasyncio.start_server(handle_request, LISTEN_IP, 80)
+    loop = asyncio.get_event_loop()
+    start_task = asyncio.start_server(handle_request, LISTEN_IP, 80)
     server = loop.run_until_complete(start_task)
     print(f"Listening for http://{nic.ifconfig()[0]}")
     try:
