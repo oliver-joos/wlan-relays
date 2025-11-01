@@ -1,7 +1,7 @@
 CONFIG_PARTITION_TABLE_CUSTOM=y
 CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions-4MiB-ota.csv"
 
-# Reduce firmware size at the cost of speed
+# Reduce firmware size at the cost of speed => saves 140k flash
 #CONFIG_COMPILER_OPTIMIZATION_SIZE=y
 #CONFIG_COMPILER_OPTIMIZATION_PERF=n
 
@@ -13,6 +13,9 @@ CONFIG_LWIP_PPP_SUPPORT=n
 
 # Disable IPv6 => saves 24.5k flash
 CONFIG_LWIP_IPV6=n
+
+# Disable SPI Ethernet driver => saves 336b flash
+CONFIG_ETH_USE_SPI_ETHERNET=n
 
 # Change maximum log level to error => saves 19k flash
 CONFIG_LOG_MAXIMUM_LEVEL_ERROR=y
